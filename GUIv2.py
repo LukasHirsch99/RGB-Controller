@@ -20,6 +20,7 @@ class RGBvalue(QLineEdit):
     self.setInputMask('000')
     self.textEdited.connect(window.changePreview)
 
+# main class
 class Window(QWidget):
   def __init__(self):
     super().__init__()
