@@ -6,6 +6,7 @@ from PyQt5.QtCore import *
 import serial
 from time import sleep
 
+# opening serial port to comunicate to arduino
 arduino = serial.Serial('COM3', 9600)
 
 # lineEidit for the rgb values
@@ -26,12 +27,14 @@ class Window(QWidget):
     super().__init__()
     self.myInit()
   
+  # changes the rgb values when color is picked
   def changeRgbCode(self):
     self.rVal.setText(str(self.color[0]))
     self.gVal.setText(str(self.color[1]))
     self.bVal.setText(str(self.color[2]))
     self.setPreview(tuple(self.color))
 
+  # changes the speed for fade or party
   def changeSpeed(self, speed):
     if self.mode == 'fade':
       self.fadeSpeed = speed
@@ -40,8 +43,10 @@ class Window(QWidget):
       self.partySpeed = speed
       self.speedVal.setText(str(speed))
 
+  # converts rgb color code to hex color code
   def toHEX(self, rgb): return "#%02x%02x%02x" % rgb
 
+  # checks if the entered rgb values are valid
   def changePreview(self):
     sender = self.sender()
     if sender.text() == '': return
@@ -57,14 +62,17 @@ class Window(QWidget):
 
     self.setPreview(tuple(self.color))
   
+  # changes the color of the preview button
   def setPreview(self, rgb): self.preview.setStyleSheet('background-color : %s; border-radius : 60px' %  self.toHEX(rgb))
 
+  # when pickColorbut is pressed
   def pickColor(self):
     self.colorPicker = QColorDialog.getColor()
     if QColor.isValidColor(self.colorPicker.name()):
       self.color = list(self.colorPicker.getRgb()[:-1])
       self.changeRgbCode()
 
+  # when user changes the light mode this function sets the gui to the proper state
   def changeMode(self, i):
     self.mode = self.modesMenu.currentText()
     if self.mode == 'static':
@@ -110,6 +118,7 @@ class Window(QWidget):
       self.speedTxt.setHidden(True)
       self.pickColorBut.setDisabled(True)
 
+  # writes data to the arduino via serial port
   def apply(self):
     if self.mode == 'static':
       arduino.write(('applyColor %s %s %s' % tuple(self.color)).encode())
@@ -121,7 +130,8 @@ class Window(QWidget):
       arduino.write('w'.encode())
     elif self.mode == 'off':
       arduino.write('0'.encode())
-      
+  
+  # gets called when the rgb values are changed to change check if the values are valid
   def speedValChanged(self, text):
     if text == 'ms': return 
     speed = int(text[:-2])
@@ -135,10 +145,12 @@ class Window(QWidget):
     elif self.mode == 'party':
       self.partySpeed = speed
       
+  # when return or enter is pressed apply the current mode to the arduino
   def keyPressEvent(self, QKeyEvent):
     if QKeyEvent.key() == Qt.Key_Enter or QKeyEvent.key() == Qt.Key_Return:
       self.apply()
 
+  # own init-function for window
   def myInit(self):
     self.speedSlider = QSlider(self)
     self.speedSlider.setOrientation(Qt.Horizontal)
@@ -148,6 +160,7 @@ class Window(QWidget):
     self.speedSlider.setMaximum(100)
     self.speedSlider.setValue(25)
 
+    # value of the speed for party and fading mode
     self.speedVal = QLineEdit(self)
     self.speedVal.setFixedSize(40, 20)
     self.speedVal.setInputMask('000ms')
@@ -155,25 +168,30 @@ class Window(QWidget):
     self.speedVal.textEdited.connect(self.speedValChanged)
     self.speedTxt = QLabel('Speed', self)
 
+    # a button because you can easy set an icon for the preview of the color
     self.preview = QPushButton(self)
     self.preview.setFixedSize(120, 120)
     self.preview.setIcon(QIcon('images\\gradient3.png'))
     self.preview.setIconSize(QSize(120, 120))
     self.preview.setStyleSheet('border-radius : 60px; background-color : white;')
 
+    #the different modes for the light
     self.mode = 'fade'
     self.modesMenu = QComboBox(self)
     self.modesMenu.addItems(['fade', 'static', 'party', 'white', 'off'])
     self.modesMenu.currentIndexChanged.connect(self.changeMode)
     modesTxt = QLabel('Mode', self)
 
+    # apply-button
     applyBut = QPushButton('Apply', self)
     applyBut.clicked.connect(self.apply)
 
+    # the fade and party speed and the color wich will be applied to the arduino
     self.color = [255, 0, 0]
     self.fadeSpeed = 25
     self.partySpeed = 25
 
+    # button to pick a color
     self.pickColorBut = QPushButton(self)
     self.pickColorBut.setFixedSize(30, 30)
     self.pickColorBut.setIconSize(QSize(30, 30))
@@ -182,10 +200,10 @@ class Window(QWidget):
     self.pickColorBut.clicked.connect(self.pickColor)
     self.pickColorBut.setDisabled(True)
 
+    # the rgb values
     self.rVal = RGBvalue(self, 'Redval', '255', (60, 30))
     self.gVal = RGBvalue(self, 'Greenval', '0', (60, 60))
     self.bVal = RGBvalue(self, 'Blueval', '0', (60, 90))
-
     rTxt = QLabel('Red', self)
     rTxt.setStyleSheet('color : red')
     gTxt = QLabel('Green', self)
@@ -193,6 +211,7 @@ class Window(QWidget):
     bTxt = QLabel('Blue', self)
     bTxt.setStyleSheet('color : blue')
 
+    # move all widgets to their position
     rTxt.move(25, 33)
     gTxt.move(25, 63)
     bTxt.move(25, 93)
@@ -211,8 +230,11 @@ class Window(QWidget):
     self.setWindowIcon(QIcon("images\\icon891.png"))
     self.show()
 
+# defines the app
 app = QApplication(sys.argv)
 
+# makes instance of window
 window = Window()
 
+# when ecit button is pressed app closes
 sys.exit(app.exec_())
