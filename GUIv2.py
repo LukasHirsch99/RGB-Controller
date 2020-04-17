@@ -8,6 +8,7 @@ from time import sleep
 
 arduino = serial.Serial('COM3', 9600)
 
+# lineEidit for the rgb values
 class RGBvalue(QLineEdit):
   def __init__(self, window, objectName, defaultVal, pos):
     super().__init__()
